@@ -1,5 +1,7 @@
 package danigol.com.criminalintent;
 
+import android.text.format.DateFormat;
+
 import java.util.Date;
 import java.util.UUID;
 
@@ -37,6 +39,11 @@ public class Crime {
 
     public void setDate(Date date) {
         mDate = date;
+    }
+
+    public String getDateString() {
+        DateFormat df = new android.text.format.DateFormat();
+        return df.format("E, MMM dd, yyyy", this.mDate).toString();
     }
 
     public boolean isSolved() {
