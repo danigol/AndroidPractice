@@ -25,7 +25,7 @@ public class CrimeLab {
 
     private CrimeLab(Context context) {
         mCrimes = new ArrayList<>();
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 10000; i++) {
             Crime crime = new Crime();
             crime.setTitle("Crime #" + i);
             crime.setSolved(i % 2 == 0);
@@ -44,14 +44,14 @@ public class CrimeLab {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
             crime = mCrimes.stream()
                     .parallel()
-                    .filter(c -> c.getId() == id)
+                    .filter(c -> c.getId().equals(id))
                     .findFirst()
                     .orElse(null);
         }
         else{
             // Do it the nasty old java 7 way
             for (Crime c : mCrimes) {
-                if (c.getId() == id) {
+                if (c.getId().equals(id)) {
                     crime = c;
                 }
             }
