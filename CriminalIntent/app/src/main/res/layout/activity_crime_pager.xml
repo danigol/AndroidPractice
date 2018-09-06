@@ -30,7 +30,7 @@
       android:layout_gravity="bottom"
       android:orientation="horizontal"
       android:layout_weight="2"
-      android:layout_margin="16dp"
+      android:layout_margin="4dp"
       >
       <LinearLayout
           android:layout_width="wrap_content"
@@ -52,6 +52,10 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="0"
+            android:maxLines="1"
+            android:inputType="text"
+            android:imeOptions="actionDone"
+            android:selectAllOnFocus="true"
             />
       </LinearLayout>
       <Button

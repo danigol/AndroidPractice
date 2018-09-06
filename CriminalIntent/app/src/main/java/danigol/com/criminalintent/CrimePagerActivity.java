@@ -11,6 +11,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.KeyEvent;
+import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
@@ -18,6 +19,8 @@ import android.widget.TextView;
 
 import java.util.List;
 import java.util.UUID;
+
+import static danigol.com.criminalintent.HelperMethods.hideSoftKeyboard;
 
 /**
  * Created by daniellegolinsky on 4/30/18.
@@ -74,6 +77,8 @@ public class CrimePagerActivity extends AppCompatActivity {
             }
         }
 
+
+        // Set up first/last/goto options
         mFirstButton = (Button) findViewById(R.id.first_button);
         mLastButton = (Button) findViewById(R.id.last_button);
         mFirstButton.setOnClickListener(v -> mViewPager.setCurrentItem(0));
@@ -82,63 +87,90 @@ public class CrimePagerActivity extends AppCompatActivity {
         mGoto = findViewById(R.id.pager_goto_button);
         mGoto.setOnClickListener(v -> gotoPage());
 
+        mGotoValue = findViewById(R.id.pager_goto_value);
+        mGotoValue.setText("" + mViewPager.getCurrentItem());
+        mGoto.setEnabled(false); // Above, we matched the value. Here we set it to false
+
+        // Listeners
         mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
                 mFirstButton.setEnabled(mViewPager.getCurrentItem() != 0);
                 mLastButton.setEnabled(mViewPager.getCurrentItem() != mViewPager.getAdapter().getCount() - 1);
-                mGoto.setEnabled(true);
+                mGotoValue.setText("" + mViewPager.getCurrentItem());
+                mGoto.setEnabled(false);
             }
             @Override
             public void onPageSelected(int position) {
+                mFirstButton.setEnabled(mViewPager.getCurrentItem() != 0);
+                mLastButton.setEnabled(mViewPager.getCurrentItem() != mViewPager.getAdapter().getCount() - 1);
+                mGotoValue.setText("" + mViewPager.getCurrentItem());
+                mGoto.setEnabled(false);
             }
             @Override
             public void onPageScrollStateChanged(int state) {
+                mFirstButton.setEnabled(mViewPager.getCurrentItem() != 0);
+                mLastButton.setEnabled(mViewPager.getCurrentItem() != mViewPager.getAdapter().getCount() - 1);
+                mGotoValue.setText("" + mViewPager.getCurrentItem());
+                mGoto.setEnabled(false);
             }
         });
 
-        mGotoValue = findViewById(R.id.pager_goto_value);
-        mGotoValue.setText("" + mViewPager.getCurrentItem());
-        mGotoValue.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-
-                if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    gotoPage();
-                    return true;
-                }
-                return false;
+        mGotoValue.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE
+                    || actionId == EditorInfo.IME_ACTION_UNSPECIFIED) { // I don't like this, but I think it's a bug
+                gotoPage();
+                return true;
             }
+            return false;
         });
 
         mGotoValue.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(final CharSequence s, final int start, final int count, final int after) {
-                String gotoValueString = mGotoValue.getText().toString();
-                try {
-                    mGoto.setEnabled(Integer.parseInt(gotoValueString) != mViewPager.getCurrentItem());
-                }
-                catch(Exception e) {
-                    mGoto.setEnabled(false);
-                }
             }
 
             @Override
             public void onTextChanged(final CharSequence s, final int start, final int before, final int count) {
-                String gotoValueString = mGotoValue.getText().toString();
-                try {
-                    mGoto.setEnabled(Integer.parseInt(gotoValueString) != mViewPager.getCurrentItem());
-                }
-                catch(Exception e) {
-                    mGoto.setEnabled(false);
-                }
+                mGoto.setEnabled(shouldEnableGoto(s.toString()));
             }
 
             @Override
             public void afterTextChanged(final Editable s) {
-
+                String content = s.toString();
+                if (content != null && content.endsWith("\n")) {
+                    mGotoValue.setText(content.replace("\n", ""));
+                    gotoPage();
+                }
             }
         });
+    }
+
+    private int getGotoValue() {
+        String gotoValueString = "";
+        int gotoValue = 0;
+        try {
+            gotoValue = Integer.parseInt(gotoValueString);
+        }
+        catch (Exception e) {
+        }
+        return gotoValue;
+    }
+
+    private boolean shouldEnableGoto() {
+        int gotoValue = getGotoValue();
+        return gotoValue >= 0 && gotoValue < mCrimes.size() && mViewPager.getCurrentItem() != gotoValue;
+    }
+
+    private boolean shouldEnableGoto(String s) {
+        int gotoValue = -1;
+        try {
+            gotoValue = Integer.parseInt(s);
+        }
+        catch (Exception e){
+        }
+
+        return gotoValue >= 0 && gotoValue < mCrimes.size() && mViewPager.getCurrentItem() != gotoValue;
     }
 
     public void gotoPage() {
@@ -147,6 +179,7 @@ public class CrimePagerActivity extends AppCompatActivity {
         try {
             gotoValue = Integer.parseInt(gotoValueString);
             mGoto.setEnabled(false);
+            hideSoftKeyboard(this);
         }
         catch(Exception e) {
         }
