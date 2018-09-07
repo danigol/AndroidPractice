@@ -53,7 +53,8 @@
             android:layout_weight="1"
             android:text="0"
             android:maxLines="1"
-            android:inputType="text"
+            android:inputType="phone"
+            android:digits="1234567890\n"
             android:imeOptions="actionDone"
             android:selectAllOnFocus="true"
             />

@@ -132,7 +132,14 @@ public class CrimePagerActivity extends AppCompatActivity {
 
             @Override
             public void onTextChanged(final CharSequence s, final int start, final int before, final int count) {
-                mGoto.setEnabled(shouldEnableGoto(s.toString()));
+                int gotoValue = -1;
+                try {
+                    gotoValue = Integer.parseInt(s.toString());
+                }
+                catch(Exception e) {
+                    // Something
+                }
+                mGoto.setEnabled(shouldEnableGoto(gotoValue));
             }
 
             @Override
@@ -146,30 +153,7 @@ public class CrimePagerActivity extends AppCompatActivity {
         });
     }
 
-    private int getGotoValue() {
-        String gotoValueString = "";
-        int gotoValue = 0;
-        try {
-            gotoValue = Integer.parseInt(gotoValueString);
-        }
-        catch (Exception e) {
-        }
-        return gotoValue;
-    }
-
-    private boolean shouldEnableGoto() {
-        int gotoValue = getGotoValue();
-        return gotoValue >= 0 && gotoValue < mCrimes.size() && mViewPager.getCurrentItem() != gotoValue;
-    }
-
-    private boolean shouldEnableGoto(String s) {
-        int gotoValue = -1;
-        try {
-            gotoValue = Integer.parseInt(s);
-        }
-        catch (Exception e){
-        }
-
+    private boolean shouldEnableGoto(int gotoValue) {
         return gotoValue >= 0 && gotoValue < mCrimes.size() && mViewPager.getCurrentItem() != gotoValue;
     }
 
