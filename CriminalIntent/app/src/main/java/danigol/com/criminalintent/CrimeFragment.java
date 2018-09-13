@@ -2,6 +2,7 @@ package danigol.com.criminalintent;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class CrimeFragment extends Fragment {
 
     private static final String ARG_CRIME_ID = "crime_id";
+    private static final String DIALOG_DATE = "DialogDate";
 
     private Crime mCrime;
     private Button mDateButton;
@@ -69,9 +71,15 @@ public class CrimeFragment extends Fragment {
             }
         });
 
+        // Date button should launch dialog fragment with date picker TODO
         mDateButton = (Button) v.findViewById(R.id.crime_date);
         mDateButton.setText(mCrime.getDateString());
         mDateButton.setEnabled(true);
+        mDateButton.setOnClickListener(v1 -> {
+           FragmentManager manager = getFragmentManager();
+           DatePickerFragment dateDialog = new DatePickerFragment();
+           dateDialog.show(manager, DIALOG_DATE);
+        });
 
         mSolvedCheckBox = (CheckBox) v.findViewById(R.id.crime_solved);
         mSolvedCheckBox.setChecked(mCrime.isSolved());
