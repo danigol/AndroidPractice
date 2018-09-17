@@ -94,7 +94,10 @@ public class CrimeFragment extends Fragment {
         updateTime();
         mTimeButton.setEnabled(true);
         mTimeButton.setOnClickListener(v2 -> {
-           // TODO This part, create fragment, pop it up here
+            FragmentManager manager = getFragmentManager();
+            TimePickerFragment timePicker = new TimePickerFragment();
+            // TODO Target
+            timePicker.show(manager, null);
         });
 
 
