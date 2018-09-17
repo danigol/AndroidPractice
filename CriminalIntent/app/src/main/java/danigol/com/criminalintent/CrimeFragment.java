@@ -15,6 +15,7 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
 
@@ -31,6 +32,7 @@ public class CrimeFragment extends Fragment {
 
     private Crime mCrime;
     private Button mDateButton;
+    private Button mTimeButton;
     private EditText mTitleField;
     private CheckBox mSolvedCheckBox;
 
@@ -87,6 +89,15 @@ public class CrimeFragment extends Fragment {
            dateDialog.show(manager, DIALOG_DATE);
         });
 
+        // TODO Finish listener for Time
+        mTimeButton = (Button) v.findViewById(R.id.crime_time);
+        updateTime();
+        mTimeButton.setEnabled(true);
+        mTimeButton.setOnClickListener(v2 -> {
+           // TODO This part, create fragment, pop it up here
+        });
+
+
         mSolvedCheckBox = (CheckBox) v.findViewById(R.id.crime_solved);
         mSolvedCheckBox.setChecked(mCrime.isSolved());
         mSolvedCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> mCrime.setSolved(isChecked));
@@ -103,11 +114,41 @@ public class CrimeFragment extends Fragment {
         if (requestCode == REQUEST_DATE) {
             Date date = (Date) data.getSerializableExtra(DatePickerFragment.EXTRA_DATE);
             mCrime.setDate(date);
-            updateDate();
+            updateDateAndTime();
         }
+    }
+
+    private void updateDateAndTime() {
+        updateDate();
+        updateTime();
     }
 
     private void updateDate() {
         mDateButton.setText(mCrime.getDateString());
+    }
+
+    private void updateTime() {
+        Date crimeTime = mCrime.getDate();
+        Calendar timeTranslator = Calendar.getInstance();
+        timeTranslator.setTime(crimeTime);
+        int hour = timeTranslator.get(Calendar.HOUR_OF_DAY);
+        int minute = timeTranslator.get(Calendar.MINUTE);
+        String timeOfDay = "am";
+        if (hour > 12) {
+            timeOfDay = "pm";
+            hour -= 12;
+        }
+
+        String hourString = prettyTime(hour, true);
+        String minuteString = prettyTime(minute, false);
+
+        mTimeButton.setText(hourString + ":" + minuteString + " " + timeOfDay);
+    }
+
+    private String prettyTime(int time, boolean isHour) {
+        if (isHour && time == 0) {
+            time = 12;
+        }
+        return time < 10 ? "0" + time : time + "";
     }
 }
