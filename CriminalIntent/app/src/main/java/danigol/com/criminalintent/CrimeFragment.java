@@ -1,7 +1,10 @@
 package danigol.com.criminalintent;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -12,6 +15,8 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 
+import java.util.Calendar;
+import java.util.Date;
 import java.util.UUID;
 
 /**
@@ -21,9 +26,15 @@ import java.util.UUID;
 public class CrimeFragment extends Fragment {
 
     private static final String ARG_CRIME_ID = "crime_id";
+    private static final String DIALOG_DATE = "DialogDate";
+    private static final String DIALOG_TIME = "DialogTime";
+
+    private static final int REQUEST_DATE = 0;
+    private static final int REQUEST_TIME = 1;
 
     private Crime mCrime;
     private Button mDateButton;
+    private Button mTimeButton;
     private EditText mTitleField;
     private CheckBox mSolvedCheckBox;
 
@@ -69,19 +80,100 @@ public class CrimeFragment extends Fragment {
             }
         });
 
+        // Date button should launch dialog fragment with date picker
         mDateButton = (Button) v.findViewById(R.id.crime_date);
-        mDateButton.setText(mCrime.getDateString());
+        updateDate();
         mDateButton.setEnabled(true);
+        mDateButton.setOnClickListener(v1 -> {
+           FragmentManager manager = getFragmentManager();
+           DatePickerFragment dateDialog = DatePickerFragment.newInstance(mCrime.getDate());
+           dateDialog.setTargetFragment(CrimeFragment.this, REQUEST_DATE);
+           dateDialog.show(manager, DIALOG_DATE);
+        });
+
+        mTimeButton = (Button) v.findViewById(R.id.crime_time);
+        updateTime();
+        mTimeButton.setEnabled(true);
+        mTimeButton.setOnClickListener(v2 -> promptUserForTime());
+
 
         mSolvedCheckBox = (CheckBox) v.findViewById(R.id.crime_solved);
         mSolvedCheckBox.setChecked(mCrime.isSolved());
-        mSolvedCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mCrime.setSolved(isChecked);
-            }
-        });
+        mSolvedCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> mCrime.setSolved(isChecked));
 
         return v;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode != Activity.RESULT_OK) {
+            return;
+        }
+
+        String extra = "";
+        boolean promptForTime = false;
+        switch(requestCode) {
+            case REQUEST_DATE:
+                extra = DatePickerFragment.EXTRA_DATE;
+                promptForTime = true;
+                break;
+            case REQUEST_TIME:
+                extra = TimePickerFragment.EXTRA_TIME;
+                break;
+        }
+
+        Date date = (Date) data.getSerializableExtra(extra);
+        mCrime.setDate(date);
+
+        if (promptForTime) {
+            // Prompt user for the time now
+            promptUserForTime();
+            // Update our date with the time
+            mCrime.setDate(date);
+        }
+
+        // Update the GUI
+        updateDateAndTime();
+    }
+
+    private void promptUserForTime() {
+        FragmentManager manager = getFragmentManager();
+        TimePickerFragment timePicker = TimePickerFragment.newInstance(mCrime.getDate());
+        timePicker.setTargetFragment(CrimeFragment.this, REQUEST_TIME);
+        timePicker.show(manager, DIALOG_TIME);
+    }
+
+    private void updateDateAndTime() {
+        updateDate();
+        updateTime();
+    }
+
+    private void updateDate() {
+        mDateButton.setText(mCrime.getDateString());
+    }
+
+    private void updateTime() {
+        Date crimeTime = mCrime.getDate();
+        Calendar timeTranslator = Calendar.getInstance();
+        timeTranslator.setTime(crimeTime);
+        int hour = timeTranslator.get(Calendar.HOUR_OF_DAY);
+        int minute = timeTranslator.get(Calendar.MINUTE);
+        String timeOfDay = "am";
+        if (hour > 12) {
+            timeOfDay = "pm";
+            hour -= 12;
+        }
+
+        String hourString = prettyTime(hour, true);
+        String minuteString = prettyTime(minute, false);
+
+        mTimeButton.setText(hourString + ":" + minuteString + " " + timeOfDay);
+    }
+
+    private String prettyTime(int time, boolean isHour) {
+        if (isHour && time == 0) {
+            time = 12;
+        }
+        return time < 10 ? "0" + time : time + "";
     }
 }
