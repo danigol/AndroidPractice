@@ -36,6 +36,8 @@ public class DatePickerFragment extends DialogFragment {
         int year = calendar.get(Calendar.YEAR);
         int month = calendar.get(Calendar.MONTH);
         int day = calendar.get(Calendar.DAY_OF_MONTH);
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        int minute = calendar.get(Calendar.MINUTE);
 
         View v = LayoutInflater.from(getActivity())
                 .inflate(R.layout.dialog_date, null);
@@ -51,7 +53,7 @@ public class DatePickerFragment extends DialogFragment {
                                        int y = mDatePicker.getYear();
                                        int m = mDatePicker.getMonth();
                                        int d = mDatePicker.getDayOfMonth();
-                                       Date date1 = new GregorianCalendar(y, m, d).getTime();
+                                       Date date1 = new GregorianCalendar(y, m, d, hour, minute).getTime();
                                        sendResult(Activity.RESULT_OK, date1);
                                    })
                 .setNegativeButton(android.R.string.cancel, null)
