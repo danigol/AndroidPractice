@@ -27,8 +27,10 @@ public class CrimeFragment extends Fragment {
 
     private static final String ARG_CRIME_ID = "crime_id";
     private static final String DIALOG_DATE = "DialogDate";
+    private static final String DIALOG_TIME = "DialogTime";
 
     private static final int REQUEST_DATE = 0;
+    private static final int REQUEST_TIME = 1;
 
     private Crime mCrime;
     private Button mDateButton;
@@ -89,16 +91,10 @@ public class CrimeFragment extends Fragment {
            dateDialog.show(manager, DIALOG_DATE);
         });
 
-        // TODO Finish listener for Time
         mTimeButton = (Button) v.findViewById(R.id.crime_time);
         updateTime();
         mTimeButton.setEnabled(true);
-        mTimeButton.setOnClickListener(v2 -> {
-            FragmentManager manager = getFragmentManager();
-            TimePickerFragment timePicker = new TimePickerFragment();
-            // TODO Target
-            timePicker.show(manager, null);
-        });
+        mTimeButton.setOnClickListener(v2 -> promptUserForTime());
 
 
         mSolvedCheckBox = (CheckBox) v.findViewById(R.id.crime_solved);
@@ -114,11 +110,37 @@ public class CrimeFragment extends Fragment {
             return;
         }
 
-        if (requestCode == REQUEST_DATE) {
-            Date date = (Date) data.getSerializableExtra(DatePickerFragment.EXTRA_DATE);
-            mCrime.setDate(date);
-            updateDateAndTime();
+        String extra = "";
+        boolean promptForTime = false;
+        switch(requestCode) {
+            case REQUEST_DATE:
+                extra = DatePickerFragment.EXTRA_DATE;
+                promptForTime = true;
+                break;
+            case REQUEST_TIME:
+                extra = TimePickerFragment.EXTRA_TIME;
+                break;
         }
+
+        Date date = (Date) data.getSerializableExtra(extra);
+        mCrime.setDate(date);
+
+        if (promptForTime) {
+            // Prompt user for the time now
+            promptUserForTime();
+            // Update our date with the time
+            mCrime.setDate(date);
+        }
+
+        // Update the GUI
+        updateDateAndTime();
+    }
+
+    private void promptUserForTime() {
+        FragmentManager manager = getFragmentManager();
+        TimePickerFragment timePicker = TimePickerFragment.newInstance(mCrime.getDate());
+        timePicker.setTargetFragment(CrimeFragment.this, REQUEST_TIME);
+        timePicker.show(manager, DIALOG_TIME);
     }
 
     private void updateDateAndTime() {
