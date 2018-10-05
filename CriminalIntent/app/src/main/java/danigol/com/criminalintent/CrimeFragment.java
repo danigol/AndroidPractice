@@ -10,6 +10,7 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -18,6 +19,8 @@ import android.widget.EditText;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
+
+import static danigol.com.criminalintent.HelperMethods.hideSoftKeyboard;
 
 /**
  * Created by daniellegolinsky on 2/12/18.
@@ -78,6 +81,15 @@ public class CrimeFragment extends Fragment {
             public void afterTextChanged(Editable s) {
                 // TODO: Something
             }
+        });
+
+        mTitleField.setOnEditorActionListener((view, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE
+                    || actionId == EditorInfo.IME_ACTION_UNSPECIFIED) { // I don't like this, but I think it's a bug
+                hideSoftKeyboard(getActivity());
+                return true;
+            }
+            return false;
         });
 
         // Date button should launch dialog fragment with date picker
