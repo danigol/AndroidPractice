@@ -17,5 +17,6 @@
         <item quantity="one">%1$d crime</item>
         <item quantity="other">%1$d crimes</item>
     </plurals>
+    <string name="no_crimes">No Crimes to Display.\nPress the add button to add one.</string>
 </resources>
 

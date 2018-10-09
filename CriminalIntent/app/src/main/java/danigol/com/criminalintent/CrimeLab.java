@@ -26,10 +26,10 @@ public class CrimeLab {
     private CrimeLab(Context context) {
         mCrimes = new ArrayList<>();
         // Just for me to test TODO Remove before we release to the Google Play Store JK, I'm not releasing this
-        Crime c = new Crime();
-        c.setTitle("Sample crime");
-        c.setSolved(true);
-        mCrimes.add(c);
+        //Crime c = new Crime();
+        //c.setTitle("Sample crime");
+        //c.setSolved(true);
+        //mCrimes.add(c);
     }
 
     public void addCrime(Crime c) {
