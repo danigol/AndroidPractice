@@ -33,6 +33,7 @@ public class CrimePagerActivity extends AppCompatActivity {
     private ViewPager mViewPager;
     private List<Crime> mCrimes;
 
+    private TextView mCrimeNumber;
     private Button mFirstButton;
     private Button mLastButton;
     private EditText mGotoValue;
@@ -77,6 +78,8 @@ public class CrimePagerActivity extends AppCompatActivity {
             }
         }
 
+        mCrimeNumber = findViewById(R.id.crime_number);
+        mCrimeNumber.setText(setCrimeNumberText(mViewPager.getCurrentItem()));
 
         // Set up first/last/goto options
         mFirstButton = (Button) findViewById(R.id.first_button);
@@ -95,24 +98,15 @@ public class CrimePagerActivity extends AppCompatActivity {
         mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-                mFirstButton.setEnabled(mViewPager.getCurrentItem() != 0);
-                mLastButton.setEnabled(mViewPager.getCurrentItem() != mViewPager.getAdapter().getCount() - 1);
-                mGotoValue.setText("" + mViewPager.getCurrentItem());
-                mGoto.setEnabled(false);
+                updateView();
             }
             @Override
             public void onPageSelected(int position) {
-                mFirstButton.setEnabled(mViewPager.getCurrentItem() != 0);
-                mLastButton.setEnabled(mViewPager.getCurrentItem() != mViewPager.getAdapter().getCount() - 1);
-                mGotoValue.setText("" + mViewPager.getCurrentItem());
-                mGoto.setEnabled(false);
+                updateView();
             }
             @Override
             public void onPageScrollStateChanged(int state) {
-                mFirstButton.setEnabled(mViewPager.getCurrentItem() != 0);
-                mLastButton.setEnabled(mViewPager.getCurrentItem() != mViewPager.getAdapter().getCount() - 1);
-                mGotoValue.setText("" + mViewPager.getCurrentItem());
-                mGoto.setEnabled(false);
+                updateView();
             }
         });
 
@@ -170,5 +164,17 @@ public class CrimePagerActivity extends AppCompatActivity {
         if (gotoValue != mViewPager.getCurrentItem()) {
             mViewPager.setCurrentItem(gotoValue);
         }
+    }
+
+    private void updateView() {
+        mFirstButton.setEnabled(mViewPager.getCurrentItem() != 0);
+        mLastButton.setEnabled(mViewPager.getCurrentItem() != mViewPager.getAdapter().getCount() - 1);
+        mGotoValue.setText("" + mViewPager.getCurrentItem());
+        mCrimeNumber.setText(setCrimeNumberText(mViewPager.getCurrentItem()));
+        mGoto.setEnabled(false);
+    }
+
+    private String setCrimeNumberText(int crimeNumber) {
+        return String.format("Crime number: %d", crimeNumber);
     }
 }

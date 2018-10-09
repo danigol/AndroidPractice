@@ -8,8 +8,12 @@ import android.support.v4.app.FragmentManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -18,6 +22,8 @@ import android.widget.EditText;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
+
+import static danigol.com.criminalintent.HelperMethods.hideSoftKeyboard;
 
 /**
  * Created by daniellegolinsky on 2/12/18.
@@ -53,6 +59,7 @@ public class CrimeFragment extends Fragment {
         super.onCreate(savedInstanceState);
         UUID crimeId = (UUID) getArguments().getSerializable(ARG_CRIME_ID);
         mCrime = CrimeLab.get(getActivity()).getCrime(crimeId);
+        setHasOptionsMenu(true);
     }
 
 
@@ -80,6 +87,15 @@ public class CrimeFragment extends Fragment {
             }
         });
 
+        mTitleField.setOnEditorActionListener((view, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE
+                    || actionId == EditorInfo.IME_ACTION_UNSPECIFIED) { // I don't like this, but I think it's a bug
+                hideSoftKeyboard(getActivity());
+                return true;
+            }
+            return false;
+        });
+
         // Date button should launch dialog fragment with date picker
         mDateButton = (Button) v.findViewById(R.id.crime_date);
         updateDate();
@@ -102,6 +118,30 @@ public class CrimeFragment extends Fragment {
         mSolvedCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> mCrime.setSolved(isChecked));
 
         return v;
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater menuInflater) {
+        super.onCreateOptionsMenu(menu, menuInflater);
+        menuInflater.inflate(R.menu.fragment_crime, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.new_crime_crime_fragment:
+                Crime crime = new Crime();
+                CrimeLab.get(getActivity()).addCrime(crime);
+                Intent intent = CrimePagerActivity.newIntent(getActivity(), crime.getId());
+                startActivity(intent);
+                return true;
+            case R.id.delete_crime_crime_fragment:
+                CrimeLab.get(getActivity()).deleteCrime(mCrime);
+                getActivity().finish();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     @Override
@@ -177,3 +217,4 @@ public class CrimeFragment extends Fragment {
         return time < 10 ? "0" + time : time + "";
     }
 }
+

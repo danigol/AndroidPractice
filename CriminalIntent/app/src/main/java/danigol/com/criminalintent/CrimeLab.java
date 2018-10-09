@@ -25,12 +25,19 @@ public class CrimeLab {
 
     private CrimeLab(Context context) {
         mCrimes = new ArrayList<>();
-        for (int i = 0; i < 10000; i++) {
-            Crime crime = new Crime();
-            crime.setTitle("Crime #" + i);
-            crime.setSolved(i % 2 == 0);
-            mCrimes.add(crime);
-        }
+        // Just for me to test TODO Remove before we release to the Google Play Store JK, I'm not releasing this
+        //Crime c = new Crime();
+        //c.setTitle("Sample crime");
+        //c.setSolved(true);
+        //mCrimes.add(c);
+    }
+
+    public void addCrime(Crime c) {
+        mCrimes.add(c);
+    }
+
+    public void deleteCrime(Crime c) {
+        mCrimes.remove(c);
     }
 
     public List<Crime> getCrimes() {
