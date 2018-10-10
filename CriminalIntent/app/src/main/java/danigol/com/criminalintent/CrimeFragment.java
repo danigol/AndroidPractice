@@ -43,6 +43,7 @@ public class CrimeFragment extends Fragment {
     private Button mTimeButton;
     private EditText mTitleField;
     private CheckBox mSolvedCheckBox;
+    private Button mReportButton;
 
     public static CrimeFragment newInstance(UUID crimeId) {
         Bundle args = new Bundle();
@@ -121,6 +122,15 @@ public class CrimeFragment extends Fragment {
         mSolvedCheckBox = (CheckBox) v.findViewById(R.id.crime_solved);
         mSolvedCheckBox.setChecked(mCrime.isSolved());
         mSolvedCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> mCrime.setSolved(isChecked));
+
+        mReportButton = v.findViewById(R.id.crime_report);
+        mReportButton.setOnClickListener(v2 -> {
+            Intent i = new Intent(Intent.ACTION_SEND);
+            i.setType("text/plain");
+            i.putExtra(Intent.EXTRA_TEXT, getCrimeReport());
+            i.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.crime_report_subject));
+            startActivity(i);
+        });
 
         return v;
     }
