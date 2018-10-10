@@ -7,6 +7,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.text.format.DateFormat;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -16,7 +17,6 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.EditText;
 
 import java.util.Calendar;
@@ -51,7 +51,6 @@ public class CrimeFragment extends Fragment {
         CrimeFragment fragment = new CrimeFragment();
         fragment.setArguments(args);
         return fragment;
-
     }
 
     @Override
@@ -70,7 +69,6 @@ public class CrimeFragment extends Fragment {
                 .updateCrime(mCrime);
     }
 
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -78,7 +76,7 @@ public class CrimeFragment extends Fragment {
 
         mTitleField = (EditText) v.findViewById(R.id.crime_title);
         mTitleField.setText(mCrime.getTitle());
-        mTitleField.addTextChangedListener(new TextWatcher () {
+        mTitleField.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
                 // TODO: Something
@@ -109,17 +107,16 @@ public class CrimeFragment extends Fragment {
         updateDate();
         mDateButton.setEnabled(true);
         mDateButton.setOnClickListener(v1 -> {
-           FragmentManager manager = getFragmentManager();
-           DatePickerFragment dateDialog = DatePickerFragment.newInstance(mCrime.getDate());
-           dateDialog.setTargetFragment(CrimeFragment.this, REQUEST_DATE);
-           dateDialog.show(manager, DIALOG_DATE);
+            FragmentManager manager = getFragmentManager();
+            DatePickerFragment dateDialog = DatePickerFragment.newInstance(mCrime.getDate());
+            dateDialog.setTargetFragment(CrimeFragment.this, REQUEST_DATE);
+            dateDialog.show(manager, DIALOG_DATE);
         });
 
         mTimeButton = (Button) v.findViewById(R.id.crime_time);
         updateTime();
         mTimeButton.setEnabled(true);
         mTimeButton.setOnClickListener(v2 -> promptUserForTime());
-
 
         mSolvedCheckBox = (CheckBox) v.findViewById(R.id.crime_solved);
         mSolvedCheckBox.setChecked(mCrime.isSolved());
@@ -160,7 +157,7 @@ public class CrimeFragment extends Fragment {
 
         String extra = "";
         boolean promptForTime = false;
-        switch(requestCode) {
+        switch (requestCode) {
             case REQUEST_DATE:
                 extra = DatePickerFragment.EXTRA_DATE;
                 promptForTime = true;
@@ -223,6 +220,24 @@ public class CrimeFragment extends Fragment {
             time = 12;
         }
         return time < 10 ? "0" + time : time + "";
+    }
+
+    private String getCrimeReport() {
+        String solvedString = null;
+        solvedString = mCrime.isSolved() ?
+                       getString(R.string.crime_report_solved) :
+                       getString(R.string.crime_report_unsolved);
+
+        String dateFormat = "EEE, MMM, dd";
+        String dateString = DateFormat.format(dateFormat, mCrime.getDate()).toString();
+
+        String suspect = mCrime.getSuspect();
+        suspect = suspect != null ?
+                  getString(R.string.crime_report_suspect, suspect) :
+                  getString(R.string.crime_report_no_suspect);
+
+        return getString(R.string.crime_report,
+                         mCrime.getTitle(), dateString, solvedString, suspect);
     }
 }
 
