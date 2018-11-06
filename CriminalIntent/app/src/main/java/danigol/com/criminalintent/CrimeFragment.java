@@ -2,7 +2,10 @@ package danigol.com.criminalintent;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.text.Editable;
@@ -37,12 +40,14 @@ public class CrimeFragment extends Fragment {
 
     private static final int REQUEST_DATE = 0;
     private static final int REQUEST_TIME = 1;
+    private static final int REQUEST_CONTACT = 2;
 
     private Crime mCrime;
     private Button mDateButton;
     private Button mTimeButton;
     private EditText mTitleField;
     private CheckBox mSolvedCheckBox;
+    private Button mSuspectButton;
     private Button mReportButton;
 
     public static CrimeFragment newInstance(UUID crimeId) {
@@ -107,7 +112,7 @@ public class CrimeFragment extends Fragment {
         mDateButton = (Button) v.findViewById(R.id.crime_date);
         updateDate();
         mDateButton.setEnabled(true);
-        mDateButton.setOnClickListener(v1 -> {
+        mDateButton.setOnClickListener(dateButtonView -> {
             FragmentManager manager = getFragmentManager();
             DatePickerFragment dateDialog = DatePickerFragment.newInstance(mCrime.getDate());
             dateDialog.setTargetFragment(CrimeFragment.this, REQUEST_DATE);
@@ -117,14 +122,22 @@ public class CrimeFragment extends Fragment {
         mTimeButton = (Button) v.findViewById(R.id.crime_time);
         updateTime();
         mTimeButton.setEnabled(true);
-        mTimeButton.setOnClickListener(v2 -> promptUserForTime());
+        mTimeButton.setOnClickListener(timeButtonView -> promptUserForTime());
 
         mSolvedCheckBox = (CheckBox) v.findViewById(R.id.crime_solved);
         mSolvedCheckBox.setChecked(mCrime.isSolved());
         mSolvedCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> mCrime.setSolved(isChecked));
 
+        final Intent pickContact = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
+        mSuspectButton = v.findViewById(R.id.crime_suspect);
+        mSuspectButton.setOnClickListener(suspectButtonView -> startActivityForResult(pickContact, REQUEST_CONTACT));
+
+        if (mCrime.getSuspect() != null) {
+            mSuspectButton.setText(mCrime.getSuspect());
+        }
+
         mReportButton = v.findViewById(R.id.crime_report);
-        mReportButton.setOnClickListener(v2 -> {
+        mReportButton.setOnClickListener(reportButtonView -> {
             Intent i = new Intent(Intent.ACTION_SEND);
             i.setType("text/plain");
             i.putExtra(Intent.EXTRA_TEXT, getCrimeReport());
@@ -162,7 +175,7 @@ public class CrimeFragment extends Fragment {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode != Activity.RESULT_OK) {
+         if (resultCode != Activity.RESULT_OK) {
             return;
         }
 
@@ -176,20 +189,50 @@ public class CrimeFragment extends Fragment {
             case REQUEST_TIME:
                 extra = TimePickerFragment.EXTRA_TIME;
                 break;
+            case REQUEST_CONTACT:
+                if (data != null) {
+                    Uri contactUri = data.getData();
+
+                    String[] queryFields = new String[] {
+                            ContactsContract.Contacts.DISPLAY_NAME
+                    };
+
+                    Cursor c = getActivity().getContentResolver()
+                                            .query(contactUri, queryFields, null, null, null);
+
+                    try {
+                        if (c.getCount() == 0) {
+                            return;
+                        }
+
+                        c.moveToFirst();
+                        String suspect = c.getString(0);
+                        mCrime.setSuspect(suspect);
+                        mSuspectButton.setText(suspect);
+                    }
+                    finally {
+                        c.close();
+                    }
+                }
+                break;
+            default:
+                break;
         }
 
-        Date date = (Date) data.getSerializableExtra(extra);
-        mCrime.setDate(date);
-
-        if (promptForTime) {
-            // Prompt user for the time now
-            promptUserForTime();
-            // Update our date with the time
+        if (requestCode == REQUEST_DATE || requestCode == REQUEST_TIME) {
+            Date date = (Date) data.getSerializableExtra(extra);
             mCrime.setDate(date);
-        }
 
-        // Update the GUI
-        updateDateAndTime();
+            if (promptForTime) {
+                // Prompt user for the time now
+                promptUserForTime();
+                // Update our date with the time
+                mCrime.setDate(date);
+            }
+
+            // Update the GUI
+            updateDateAndTime();
+        }
     }
 
     private void promptUserForTime() {
