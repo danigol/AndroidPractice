@@ -89,92 +89,35 @@ public class CrimeFragment extends Fragment {
                              Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_crime, container, false);
 
-        mTitleField = (EditText) v.findViewById(R.id.crime_title);
-        mTitleField.setText(mCrime.getTitle());
-        mTitleField.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                // TODO: Something
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                mCrime.setTitle(s.toString());
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                // TODO: Something
-            }
-        });
-
-        mTitleField.setOnEditorActionListener((view, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_DONE
-                    || actionId == EditorInfo.IME_ACTION_UNSPECIFIED) { // I don't like this, but I think it's a bug
-                hideSoftKeyboard(getActivity());
-                return true;
-            }
-            return false;
-        });
-
-        mContactsTip = v.findViewById(R.id.contacts_access_tip);
-        mContactsTip.setVisibility(View.INVISIBLE); // Default to invisible so it doesn't show before requesting permission
+        // Crime title field.
+        setupTitleField(v);
 
         // Date button should launch dialog fragment with date picker
-        mDateButton = (Button) v.findViewById(R.id.crime_date);
-        updateDate();
-        mDateButton.setEnabled(true);
-        mDateButton.setOnClickListener(dateButtonView -> {
-            FragmentManager manager = getFragmentManager();
-            DatePickerFragment dateDialog = DatePickerFragment.newInstance(mCrime.getDate());
-            dateDialog.setTargetFragment(CrimeFragment.this, REQUEST_DATE);
-            dateDialog.show(manager, DIALOG_DATE);
-        });
+        setupDateButton(v);
 
-        mTimeButton = (Button) v.findViewById(R.id.crime_time);
-        updateTime();
-        mTimeButton.setEnabled(true);
-        mTimeButton.setOnClickListener(timeButtonView -> promptUserForTime());
+        // Set up the time button
+        setupTimeButton(v);
 
-        mSolvedCheckBox = (CheckBox) v.findViewById(R.id.crime_solved);
-        mSolvedCheckBox.setChecked(mCrime.isSolved());
-        mSolvedCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> mCrime.setSolved(isChecked));
+        // Set up the solved check box button
+        setupSolvedCheckbox(v);
 
         // Set Suspect (Contact picker) button
-        mSuspectButton = v.findViewById(R.id.crime_suspect);
-        mSuspectButton.setOnClickListener(suspectButtonView -> {
-            if (canAccessContacts) {
-                Intent pickContact = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
-                startActivityForResult(pickContact, REQUEST_CONTACT);
-            }
-        });
+        setupSuspectButton(v);
 
         // Call Suspect button
-        mSuspectPhoneButton = v.findViewById(R.id.crime_call);
-        mSuspectPhoneButton.setOnClickListener(callView -> {
-            if (canAccessContacts) {
-                final Intent callContact = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + mCrime.getSuspectPhone()));
-                startActivity(callContact);
-            }
-        });
+        setupCallSuspectButton(v);
 
+        // Add a contacts tip for permissions
+        setupContactPermissionText(v);
+
+        // Set up the report button
+        setupReportCrimeButton(v);
 
         // Request contacts on first open
         requestPermissions(new String[]{ Manifest.permission.READ_CONTACTS }, CONTACTS_PERMISSION);
 
         // Disable contacts related buttons if user has not chosen them.
         updateContactsButtons();
-
-        mReportButton = v.findViewById(R.id.crime_report);
-        mReportButton.setOnClickListener(reportButtonView -> {
-            Intent i = ShareCompat.IntentBuilder.from(this.getActivity())
-                                                .setType("text/plain")
-                                                .setChooserTitle(getString(R.string.crime_report_subject))
-                                                .setText(getCrimeReport())
-                                                .setSubject(getString(R.string.crime_report_subject))
-                                                .getIntent();
-            startActivity(i);
-        });
 
         return v;
     }
@@ -391,6 +334,139 @@ public class CrimeFragment extends Fragment {
         updateContactsButtons();
         // Update the DB
         CrimeLab.get(getActivity()).updateCrime(mCrime);
+    }
+
+    ///////////////////////
+    /** SET UP THE VIEW **/
+    ///////////////////////
+
+    /**
+     * Initialize the title field
+     * @param v
+     */
+    private void setupTitleField(View v) {
+        mTitleField = (EditText) v.findViewById(R.id.crime_title);
+        mTitleField.setText(mCrime.getTitle());
+        mTitleField.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                // TODO: Something
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                mCrime.setTitle(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                // TODO: Something
+            }
+        });
+
+        mTitleField.setOnEditorActionListener((view, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE
+                    || actionId == EditorInfo.IME_ACTION_UNSPECIFIED) { // I don't like this, but I think it's a bug
+                hideSoftKeyboard(getActivity());
+                return true;
+            }
+            return false;
+        });
+    }
+
+    /**
+     * Initialize the Date button
+     * @param v
+     */
+    private void setupDateButton(View v) {
+        mDateButton = (Button) v.findViewById(R.id.crime_date);
+        updateDate();
+        mDateButton.setEnabled(true);
+        mDateButton.setOnClickListener(dateButtonView -> {
+            FragmentManager manager = getFragmentManager();
+            DatePickerFragment dateDialog = DatePickerFragment.newInstance(mCrime.getDate());
+            dateDialog.setTargetFragment(CrimeFragment.this, REQUEST_DATE);
+            dateDialog.show(manager, DIALOG_DATE);
+        });
+    }
+
+    /**
+     * Initialize the time button
+     * @param v
+     */
+    private void setupTimeButton(View v) {
+        mTimeButton = (Button) v.findViewById(R.id.crime_time);
+        updateTime();
+        mTimeButton.setEnabled(true);
+        mTimeButton.setOnClickListener(timeButtonView -> promptUserForTime());
+    }
+
+    /**
+     * Initialize the solved checkbox
+     * @param v
+     */
+    private void setupSolvedCheckbox(View v) {
+        mSolvedCheckBox = (CheckBox) v.findViewById(R.id.crime_solved);
+        mSolvedCheckBox.setChecked(mCrime.isSolved());
+        mSolvedCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> mCrime.setSolved(isChecked));
+    }
+
+    /**
+     * Initialize the suspect button
+     * This chooses a contact to label as a suspect
+     * @param v
+     */
+    private void setupSuspectButton(View v) {
+        mSuspectButton = v.findViewById(R.id.crime_suspect);
+        mSuspectButton.setOnClickListener(suspectButtonView -> {
+            if (canAccessContacts) {
+                Intent pickContact = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
+                startActivityForResult(pickContact, REQUEST_CONTACT);
+            }
+        });
+    }
+
+    /**
+     * Initialize the call suspect button
+     * @param v
+     */
+    private void setupCallSuspectButton(View v) {
+        mSuspectPhoneButton = v.findViewById(R.id.crime_call);
+        mSuspectPhoneButton.setOnClickListener(callView -> {
+            if (canAccessContacts) {
+                final Intent callContact = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + mCrime.getSuspectPhone()));
+                startActivity(callContact);
+            }
+        });
+    }
+
+    /**
+     * Setup the contacts permission text
+     * This will default to invisible unless the user
+     *      does not give us contacts access.
+     * @param v
+     */
+    private void setupContactPermissionText(View v) {
+        mContactsTip = v.findViewById(R.id.contacts_access_tip);
+        mContactsTip.setVisibility(View.INVISIBLE);
+    }
+
+    /**
+     * Initialize the report crime button
+     * This will send an email to report the crime
+     * @param v
+     */
+    private void setupReportCrimeButton(View v) {
+        mReportButton = v.findViewById(R.id.crime_report);
+        mReportButton.setOnClickListener(reportButtonView -> {
+            Intent i = ShareCompat.IntentBuilder.from(this.getActivity())
+                                                .setType("text/plain")
+                                                .setChooserTitle(getString(R.string.crime_report_subject))
+                                                .setText(getCrimeReport())
+                                                .setSubject(getString(R.string.crime_report_subject))
+                                                .getIntent();
+            startActivity(i);
+        });
     }
 }
 
