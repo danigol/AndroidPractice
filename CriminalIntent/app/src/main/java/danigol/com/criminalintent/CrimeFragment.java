@@ -24,6 +24,8 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.Calendar;
@@ -52,6 +54,8 @@ public class CrimeFragment extends Fragment {
     private Crime mCrime;
     private Button mDateButton;
     private Button mTimeButton;
+    private ImageView mPhotoView;
+    private ImageButton mPhotoButton;
     private EditText mTitleField;
     private CheckBox mSolvedCheckBox;
     private Button mSuspectButton;
@@ -489,6 +493,22 @@ public class CrimeFragment extends Fragment {
                                                 .getIntent();
             startActivity(i);
         });
+    }
+
+    /**
+     * Set up the photo viewer to show a thumbnail
+     * @param v
+     */
+    private void setupPhotoView(View v) {
+        mPhotoView = v.findViewById(R.id.crime_photo);
+    }
+
+    /**
+     * Set up the photo button, a camera icon
+     * @param v
+     */
+    private void setupPhotoButton(View v) {
+        mPhotoButton = v.findViewById(R.id.crime_camera);
     }
 }
 
