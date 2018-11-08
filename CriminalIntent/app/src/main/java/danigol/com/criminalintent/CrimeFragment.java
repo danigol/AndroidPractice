@@ -243,6 +243,9 @@ public class CrimeFragment extends Fragment {
         updateGUI();
     }
 
+    /**
+     * Ask the user to input the time of the crime
+     */
     private void promptUserForTime() {
         FragmentManager manager = getFragmentManager();
         TimePickerFragment timePicker = TimePickerFragment.newInstance(mCrime.getDate());
@@ -250,15 +253,24 @@ public class CrimeFragment extends Fragment {
         timePicker.show(manager, DIALOG_TIME);
     }
 
+    /**
+     * Calls both updateDate() and updateTime() to update the GUI
+     */
     private void updateDateAndTime() {
         updateDate();
         updateTime();
     }
 
+    /**
+     * Sets the date on the button
+     */
     private void updateDate() {
         mDateButton.setText(mCrime.getDateString());
     }
 
+    /**
+     * Updates the text of the time
+     */
     private void updateTime() {
         Date crimeTime = mCrime.getDate();
         Calendar timeTranslator = Calendar.getInstance();
@@ -277,6 +289,12 @@ public class CrimeFragment extends Fragment {
         mTimeButton.setText(hourString + ":" + minuteString + " " + timeOfDay);
     }
 
+    /**
+     * Format the time
+     * @param time
+     * @param isHour
+     * @return
+     */
     private String prettyTime(int time, boolean isHour) {
         if (isHour && time == 0) {
             time = 12;
@@ -284,6 +302,10 @@ public class CrimeFragment extends Fragment {
         return time < 10 ? "0" + time : time + "";
     }
 
+    /**
+     * Generate the string for the crime report that we send via email
+     * @return
+     */
     private String getCrimeReport() {
         String solvedString = null;
         solvedString = mCrime.isSolved() ?
