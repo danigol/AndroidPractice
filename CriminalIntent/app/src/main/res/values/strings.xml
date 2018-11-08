@@ -30,6 +30,8 @@
     <string name="crime_report_suspect">The suspect is %s.</string>
     <string name="crime_report_subject">CriminalIntent Crime Report</string>
     <string name="send_report">Send report via</string>
+    <string name="choose_suspect">Choose Suspect</string>
+    <string name="call_suspect">Call Suspect</string>
 
 </resources>
 

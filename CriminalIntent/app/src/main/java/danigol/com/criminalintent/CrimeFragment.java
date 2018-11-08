@@ -1,5 +1,6 @@
 package danigol.com.criminalintent;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -23,6 +24,7 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -43,6 +45,9 @@ public class CrimeFragment extends Fragment {
     private static final int REQUEST_DATE = 0;
     private static final int REQUEST_TIME = 1;
     private static final int REQUEST_CONTACT = 2;
+    private static final int CONTACTS_PERMISSION = 3;
+
+    private boolean canAccessContacts = false;
 
     private Crime mCrime;
     private Button mDateButton;
@@ -50,7 +55,9 @@ public class CrimeFragment extends Fragment {
     private EditText mTitleField;
     private CheckBox mSolvedCheckBox;
     private Button mSuspectButton;
+    private Button mSuspectPhoneButton;
     private Button mReportButton;
+    private TextView mContactsTip;
 
     public static CrimeFragment newInstance(UUID crimeId) {
         Bundle args = new Bundle();
@@ -110,6 +117,9 @@ public class CrimeFragment extends Fragment {
             return false;
         });
 
+        mContactsTip = v.findViewById(R.id.contacts_access_tip);
+        mContactsTip.setVisibility(View.INVISIBLE); // Default to invisible so it doesn't show before requesting permission
+
         // Date button should launch dialog fragment with date picker
         mDateButton = (Button) v.findViewById(R.id.crime_date);
         updateDate();
@@ -130,18 +140,30 @@ public class CrimeFragment extends Fragment {
         mSolvedCheckBox.setChecked(mCrime.isSolved());
         mSolvedCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> mCrime.setSolved(isChecked));
 
-        final Intent pickContact = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
+        // Set Suspect (Contact picker) button
         mSuspectButton = v.findViewById(R.id.crime_suspect);
-        mSuspectButton.setOnClickListener(suspectButtonView -> startActivityForResult(pickContact, REQUEST_CONTACT));
+        mSuspectButton.setOnClickListener(suspectButtonView -> {
+            if (canAccessContacts) {
+                Intent pickContact = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
+                startActivityForResult(pickContact, REQUEST_CONTACT);
+            }
+        });
 
-        if (mCrime.getSuspect() != null) {
-            mSuspectButton.setText(mCrime.getSuspect());
-        }
+        // Call Suspect button
+        mSuspectPhoneButton = v.findViewById(R.id.crime_call);
+        mSuspectPhoneButton.setOnClickListener(callView -> {
+            if (canAccessContacts) {
+                final Intent callContact = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + mCrime.getSuspectPhone()));
+                startActivity(callContact);
+            }
+        });
 
-        PackageManager packageManager = getActivity().getPackageManager();
-        if (packageManager.resolveActivity(pickContact, PackageManager.MATCH_DEFAULT_ONLY) == null) {
-            mSuspectButton.setEnabled(false);
-        }
+
+        // Request contacts on first open
+        requestPermissions(new String[]{ Manifest.permission.READ_CONTACTS }, CONTACTS_PERMISSION);
+
+        // Disable contacts related buttons if user has not chosen them.
+        updateContactsButtons();
 
         mReportButton = v.findViewById(R.id.crime_report);
         mReportButton.setOnClickListener(reportButtonView -> {
@@ -155,6 +177,18 @@ public class CrimeFragment extends Fragment {
         });
 
         return v;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        switch(requestCode) {
+            case CONTACTS_PERMISSION:
+                canAccessContacts = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+                updateContactsButtons();
+                break;
+            default:
+                break;
+        }
     }
 
     @Override
@@ -202,7 +236,8 @@ public class CrimeFragment extends Fragment {
                     Uri contactUri = data.getData();
 
                     String[] queryFields = new String[] {
-                            ContactsContract.Contacts.DISPLAY_NAME
+                            ContactsContract.Contacts.DISPLAY_NAME,
+                            ContactsContract.Contacts._ID
                     };
 
                     Cursor c = getActivity().getContentResolver()
@@ -216,7 +251,29 @@ public class CrimeFragment extends Fragment {
                         c.moveToFirst();
                         String suspect = c.getString(0);
                         mCrime.setSuspect(suspect);
-                        mSuspectButton.setText(suspect);
+
+                        // Try to grab the phone number
+                        String contactID = c.getString(1);
+                        Cursor phoneCursor = getActivity().getContentResolver()
+                                .query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                                       null,
+                                       ContactsContract.CommonDataKinds.Phone.CONTACT_ID +
+                                               " = " + contactID,
+                                       null, null);
+
+                        if (phoneCursor.getCount() > 0) {
+                            phoneCursor.moveToFirst();
+                            String number = phoneCursor.getString(
+                                        phoneCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER))
+                                    .replace(" ", "")
+                                    .replace("(", "")
+                                    .replace(")", "")
+                                    .replace("-", "");
+                            mCrime.setSuspectPhone(number);
+                        }
+                        else {
+                            mCrime.setSuspectPhone(null);
+                        }
                     }
                     finally {
                         c.close();
@@ -237,10 +294,10 @@ public class CrimeFragment extends Fragment {
                 // Update our date with the time
                 mCrime.setDate(date);
             }
-
-            // Update the GUI
-            updateDateAndTime();
         }
+
+        // Update the GUI
+        updateGUI();
     }
 
     private void promptUserForTime() {
@@ -300,6 +357,40 @@ public class CrimeFragment extends Fragment {
 
         return getString(R.string.crime_report,
                          mCrime.getTitle(), dateString, solvedString, suspect);
+    }
+
+    /**
+     * Update the contact selection and calling buttons for suspects
+     * Will add text or enable/disable
+     */
+    private void updateContactsButtons() {
+        mSuspectButton.setEnabled(canAccessContacts);
+        mSuspectPhoneButton.setEnabled(canAccessContacts);
+
+        if (!canAccessContacts) {
+            mContactsTip.setVisibility(View.VISIBLE);
+        }
+        else {
+            mContactsTip.setVisibility(View.INVISIBLE);
+        }
+
+        if (mCrime != null && mCrime.getSuspect() != null) {
+            mSuspectButton.setText("Suspect: " + mCrime.getSuspect());
+        }
+
+        if (mCrime != null && mCrime.getSuspectPhone() != null) {
+            mSuspectPhoneButton.setText("Call Suspect: " + mCrime.getSuspectPhone());
+        }
+    }
+
+    /**
+     * Calls all GUI updates
+     */
+    private void updateGUI() {
+        updateDateAndTime();
+        updateContactsButtons();
+        // Update the DB
+        CrimeLab.get(getActivity()).updateCrime(mCrime);
     }
 }
 

@@ -49,9 +49,26 @@
         android:id="@+id/crime_suspect"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/crime_suspect_text"
+        android:text="@string/choose_suspect"
         android:layout_marginTop="8dp"
         />
+
+    <Button
+        android:id="@+id/crime_call"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/call_suspect"
+        />
+
+    <TextView
+        android:id="@+id/contacts_access_tip"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAlignment="center"
+        android:textSize="6pt"
+        android:text="Enable contacts in permissions to add or call a suspect."
+        />
+
     <Button
         android:id="@+id/crime_report"
         android:layout_width="match_parent"
