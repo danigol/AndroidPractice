@@ -75,10 +75,11 @@ public class CrimeLab {
         List<Crime> crimes = new ArrayList<>();
         CrimeCursorWrapper cursor = queryCrimes(null, null);
         try {
-            cursor.moveToFirst();
-            while (!cursor.isAfterLast()) {
-                crimes.add(cursor.getCrime());
-                cursor.moveToNext();
+            if (cursor.moveToFirst()) {
+                while (!cursor.isAfterLast()) {
+                    crimes.add(cursor.getCrime());
+                    cursor.moveToNext();
+                }
             }
         }
         finally {
@@ -119,6 +120,8 @@ public class CrimeLab {
         values.put(CrimeTable.Cols.TITLE, crime.getTitle());
         values.put(CrimeTable.Cols.DATE, crime.getDate().getTime());
         values.put(CrimeTable.Cols.SOLVED, crime.isSolved() ? 1 : 0);
+        values.put(CrimeTable.Cols.SUSPECT, crime.getSuspect());
+        values.put(CrimeTable.Cols.SUSPECT_PHONE, crime.getSuspectPhone());
 
         return values;
     }
